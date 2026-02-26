@@ -68,3 +68,15 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 app.listen(3000, () => console.log('✅ Secure server running'));
+
+// ❌ Ajout d'une injection Sql pour teste et voir si SAST (Semgrep) va détecte automatiquement notre attaque
+app.get('/api/user', (req, res) => {
+    const userId = req.query.id;
+  
+    // Simulation d'une requête SQL vulnérable
+    const query = "SELECT * FROM users WHERE id = " + userId;
+  
+    console.log("Executing query:", query);
+  
+    res.json({ query });
+  });
