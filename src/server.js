@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
+const mysql = require('mysql2');
 
 const app = express();
 
@@ -23,10 +24,17 @@ if (!SECRET || SECRET.length < 32) {
 app.use(helmet());
 app.use(express.json({ limit: '10kb' }));
 
+// ✅ Rate limiting login
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
   message: 'Too many login attempts'
+});
+
+// ✅ Rate limiting général API
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100
 });
 
 // =============================
@@ -79,17 +87,9 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-// ==========================================================
-// ❌ Route volontairement vulnérable (Injection SQL)
-// ==========================================================
-// 🔴 MODIFICATION IMPORTANTE :
-// 1) Route placée AVANT app.listen()
-// 2) Simulation plus réaliste pour déclencher SAST
-// ==========================================================
-
-const mysql = require('mysql2');
-
-// Connexion simulée (non sécurisée volontairement)
+// =============================
+// 🗄️ Connexion base de données
+// =============================
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
@@ -97,14 +97,16 @@ const db = mysql.createConnection({
   database: "testdb"
 });
 
-app.get('/api/user', (req, res) => {
+// =============================
+// ✅ Route sécurisée (SQL paramétrée + rate limit)
+// =============================
+app.get('/api/user', apiLimiter, (req, res) => {
   const userId = req.query.id;
 
-  // ❌ Vulnérabilité : concaténation directe de l'entrée utilisateur
-  // Si id = 1 OR 1=1 → injection SQL
-  const query = "SELECT * FROM users WHERE id = " + userId;
+  // ✅ Requête paramétrée (empêche injection SQL)
+  const query = "SELECT * FROM users WHERE id = ?";
 
-  db.query(query, (err, results) => {
+  db.query(query, [userId], (err, results) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -113,6 +115,6 @@ app.get('/api/user', (req, res) => {
 });
 
 // =============================
-// 🚀 Lancement serveur (TOUJOURS À LA FIN)
+// 🚀 Lancement serveur
 // =============================
 app.listen(3000, () => console.log('✅ Secure server running'));
