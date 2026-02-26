@@ -1,6 +1,14 @@
 name: DevSecOps Pipeline
 
-on: [push, pull_request]
+#on: [push, pull_request]
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
 
 jobs:
   # ═══════════════════════════════════════
