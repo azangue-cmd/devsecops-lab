@@ -1,6 +1,6 @@
 # DevSecOps Lab
 
-![Security](https://github.com/commande-azangue/devsecops-lab/actions/workflows/security.yml/badge.svg)
+![Security](https://github.com/commande-azangue/laboratoire-devsecops/actions/workflows/security.yml/badge.svg)
 
 ## Description
 
