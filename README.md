@@ -2,7 +2,7 @@
 
 # Laboratoire DevSecOps
 
-![Security](https://github.com/commande-azangue/laboratoire-devsecops/actions/workflows/security.yml/badge.svg?branch=principal)
+[![DevSecOps Pipeline](https://github.com/azangue-cmd/devsecops-lab/actions/workflows/security.yml/badge.svg)](https://github.com/azangue-cmd/devsecops-lab/actions/workflows/security.yml)
 
 ## Description
 
