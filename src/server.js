@@ -7,7 +7,9 @@ const { body, validationResult } = require('express-validator');
 
 const app = express();
 
-// ✅ Secret depuis variable d'environnement
+// =============================
+// 🔐 Gestion du secret JWT
+// =============================
 const SECRET = process.env.JWT_SECRET;
 
 if (!SECRET || SECRET.length < 32) {
@@ -15,19 +17,23 @@ if (!SECRET || SECRET.length < 32) {
   process.exit(1);
 }
 
-// ✅ Sécurité
+// =============================
+// 🛡️ Middlewares de sécurité
+// =============================
 app.use(helmet());
 app.use(express.json({ limit: '10kb' }));
 
-// ✅ Rate limiting
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
   message: 'Too many login attempts'
 });
 
-// ✅ Validation des entrées
-app.post('/api/login',
+// =============================
+// 🔐 Route login sécurisée
+// =============================
+app.post(
+  '/api/login',
   loginLimiter,
   [
     body('username').isString().trim().notEmpty(),
@@ -38,11 +44,13 @@ app.post('/api/login',
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    
+
     const { username, password } = req.body;
-    
-    // Ici : vérification réelle avec bcrypt + DB
-    if (username === process.env.ADMIN_USER && password === process.env.ADMIN_PASS) {
+
+    if (
+      username === process.env.ADMIN_USER &&
+      password === process.env.ADMIN_PASS
+    ) {
       const token = jwt.sign(
         { username },
         SECRET,
@@ -55,28 +63,56 @@ app.post('/api/login',
   }
 );
 
-// ✅ Endpoint de santé (sans infos sensibles)
+// =============================
+// ❤️ Health check
+// =============================
 app.get('/health', (req, res) => {
   res.json({ status: 'OK' });
 });
 
-// ✅ Pas d'endpoint de debug en production
+// =============================
+// 🐞 Debug uniquement hors production
+// =============================
 if (process.env.NODE_ENV !== 'production') {
   app.get('/debug', (req, res) => {
     res.json({ message: 'Debug mode' });
   });
 }
 
-app.listen(3000, () => console.log('✅ Secure server running'));
+// ==========================================================
+// ❌ Route volontairement vulnérable (Injection SQL)
+// ==========================================================
+// 🔴 MODIFICATION IMPORTANTE :
+// 1) Route placée AVANT app.listen()
+// 2) Simulation plus réaliste pour déclencher SAST
+// ==========================================================
 
-// ❌ Ajout d'une injection Sql pour teste et voir si SAST (Semgrep) va détecte automatiquement notre attaque
+const mysql = require('mysql2');
+
+// Connexion simulée (non sécurisée volontairement)
+const db = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "password",
+  database: "testdb"
+});
+
 app.get('/api/user', (req, res) => {
-    const userId = req.query.id;
-  
-    // Simulation d'une requête SQL vulnérable
-    const query = "SELECT * FROM users WHERE id = " + userId;
-  
-    console.log("Executing query:", query);
-  
-    res.json({ query });
+  const userId = req.query.id;
+
+  // ❌ Vulnérabilité : concaténation directe de l'entrée utilisateur
+  // Si id = 1 OR 1=1 → injection SQL
+  const query = "SELECT * FROM users WHERE id = " + userId;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(results);
   });
+});
+
+// =============================
+// 🚀 Lancement serveur (TOUJOURS À LA FIN)
+// =============================
+app.listen(3000, () => console.log('✅ Secure server running'));
