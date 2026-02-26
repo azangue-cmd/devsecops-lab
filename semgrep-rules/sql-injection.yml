@@ -1,0 +1,8 @@
+rules:
+  - id: custom-sql-injection-detection
+    patterns:
+      - pattern: |
+          $QUERY = "SELECT * FROM users WHERE id = " + $VAR
+    message: Possible SQL Injection via string concatenation
+    languages: [javascript]
+    severity: ERROR

@@ -44,8 +44,7 @@ jobs:
             p/security-audit
             p/secrets
             p/owasp-top-ten
-            p/javascript
-            p/nodejs
+            ./semgrep-rules
 
   # ═══════════════════════════════════════
   # 3. SCA - Analyse des dépendances (Software Composition Analysis)
