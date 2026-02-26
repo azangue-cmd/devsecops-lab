@@ -203,3 +203,26 @@ jobs:
           else
             echo "✅ All security checks passed" >> $GITHUB_STEP_SUMMARY
           fi
+
+  # ═══════════════════════════════════════
+  # 7. CODEQL - Analyse SAST native GitHub
+  # Détecte vulnérabilités avancées dans le code JavaScript
+  # ═══════════════════════════════════════
+  codeql:
+    name: 🔎 CodeQL
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
